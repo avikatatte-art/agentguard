@@ -38,7 +38,8 @@ export default function PlaybookPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">Generating recovery playbook with Gemini 2.0...</p>
+          <p className="text-gray-600 font-medium">Generating recovery playbook with Gemini 3...</p>
+          <p className="text-sm text-gray-500 mt-2">AI-powered incident analysis in progress</p>
         </div>
       </div>
     );
@@ -121,30 +122,38 @@ export default function PlaybookPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-3">Actions:</h4>
-                  <div className="space-y-2">
-                    {step.actions.map((action, idx) => (
-                      <div key={idx} className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-700">{action}</span>
-                      </div>
-                    ))}
+                {step.actions && step.actions.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="font-semibold text-gray-900 mb-3">Actions:</h4>
+                    <div className="space-y-2">
+                      {step.actions.map((action: any, idx: number) => (
+                        <div key={idx} className="flex items-start gap-3">
+                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                          <span className="text-gray-700">
+                            {typeof action === 'string' ? action : action.action || JSON.stringify(action)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Verifications */}
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Verification Steps:</h4>
-                  <div className="space-y-2">
-                    {step.verifications.map((verification, idx) => (
-                      <div key={idx} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                        <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-700 text-sm">{verification}</span>
-                      </div>
-                    ))}
+                {step.verifications && step.verifications.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">Verification Steps:</h4>
+                    <div className="space-y-2">
+                      {step.verifications.map((verification: any, idx: number) => (
+                        <div key={idx} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                          <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                          <span className="text-gray-700 text-sm">
+                            {typeof verification === 'string' ? verification : verification.verification || JSON.stringify(verification)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </div>

@@ -5,6 +5,8 @@ from typing import List, Dict, Any, Optional
 import json
 import random
 from datetime import datetime
+from gemini_service import gemini_service
+from demo_datasets import get_dataset
 
 app = FastAPI(
     title="AgentGuard API",
@@ -51,8 +53,40 @@ async def health():
 async def scan_agents(request: ScanRequest):
     """Scan and discover AI agents in the system"""
     
-    # Demo dataset - realistic e-commerce agent ecosystem with enhanced metrics
-    agents = [
+    # Load dataset based on demo type
+    dataset = get_dataset(request.demo_type)
+    agents = dataset["agents"]
+    dependencies = dataset["dependencies"]
+    
+    # Store in state
+    app_state["agents"] = agents
+    app_state["dependencies"] = dependencies
+    
+    shadow_agents = [a for a in agents if a["type"] == "shadow_agent"]
+    
+    return {
+        "success": True,
+        "total_agents": len(agents),
+        "total_shadow_agents": len(shadow_agents),
+        "agents": agents,
+        "shadow_agents": shadow_agents,
+        "dependencies": dependencies,
+        "scan_time": datetime.now().isoformat(),
+        "demo_type": request.demo_type,
+        "metrics": {
+            "total_requests_per_min": sum(a.get("requests_per_min", 0) for a in agents),
+            "avg_uptime": f"{sum(float(a.get('uptime', '0%').rstrip('%')) for a in agents) / len(agents):.1f}%",
+            "critical_agents": len([a for a in agents if a["risk"] == "critical"]),
+            "high_risk_agents": len([a for a in agents if a["risk"] == "high"])
+        },
+        "gemini_available": gemini_service.is_available()
+    }
+
+# Legacy code below - will be removed
+@app.post("/api/scan_old")
+async def scan_agents_old(request: ScanRequest):
+    """Old scan endpoint - deprecated"""
+    agents_old = [
         {
             "id": "pricing-agent", 
             "name": "PricingAgent", 
@@ -592,33 +626,55 @@ async def simulate_failure(request: SimulateRequest):
 
 @app.post("/api/playbook")
 async def generate_playbook():
-    """Generate recovery playbook with audit trail"""
+    """Generate recovery playbook with audit trail using Gemini 3 API"""
     
     if not app_state["simulation_result"]:
         raise HTTPException(status_code=400, detail="No simulation result available")
     
     sim = app_state["simulation_result"]
-    agent_name = sim["failed_agent"]["name"]
+    failed_agent = next((a for a in app_state["agents"] if a["id"] == sim["failed_agent"]["id"]), None)
     
-    # Generate playbook steps
+    if not failed_agent:
+        raise HTTPException(status_code=404, detail="Failed agent not found")
+    
+    # Get impacted agents details
+    impacted_agents = sim["impacted_agents"]
+    
+    # Use Gemini 3 for incident analysis
+    incident_analysis = await gemini_service.analyze_incident(
+        failed_agent=failed_agent,
+        impacted_agents=impacted_agents,
+        dependencies=app_state["dependencies"]
+    )
+    
+    # Use Gemini 3 to generate recovery playbook
+    gemini_playbook = await gemini_service.generate_playbook(
+        failed_agent=failed_agent,
+        impacted_agents=impacted_agents,
+        dependencies=app_state["dependencies"],
+        incident_analysis=incident_analysis
+    )
+    
+    # Build comprehensive playbook with Gemini insights
     playbook = {
-        "incident": f"{agent_name} Failure",
-        "estimated_recovery_time": "15-30 minutes",
+        "incident": gemini_playbook.get("incident_title", f"{failed_agent['name']} Failure"),
+        "estimated_recovery_time": gemini_playbook.get("estimated_recovery_time", "15-30 minutes"),
         "severity": sim["impact_estimate"]["severity"],
-        "steps": [
+        "gemini_analysis": incident_analysis,
+        "steps": gemini_playbook.get("steps", [
             {
                 "id": "step1",
                 "title": "Immediate Containment",
                 "timeframe": "0-5 minutes",
                 "actions": [
-                    f"Switch {agent_name} to cached/fallback mode",
+                    f"Switch {failed_agent['name']} to cached/fallback mode",
                     "Pause downstream triggers to prevent cascade",
                     "Alert on-call team via PagerDuty",
                     "Enable circuit breaker for affected services"
                 ],
                 "verifications": [
                     "Check: Error rate drops below 1%",
-                    f"Monitor: {agent_name} fallback mode active",
+                    f"Monitor: {failed_agent['name']} fallback mode active",
                     "Verify: Downstream agents stable"
                 ]
             },
@@ -627,7 +683,7 @@ async def generate_playbook():
                 "title": "Activate Backup System",
                 "timeframe": "5-15 minutes",
                 "actions": [
-                    f"Deploy backup {agent_name} instance",
+                    f"Deploy backup {failed_agent['name']} instance",
                     "Route 10% traffic for testing",
                     "Monitor error rates and latency",
                     "Validate data consistency"
@@ -657,11 +713,13 @@ async def generate_playbook():
                     "Validate: No error spikes"
                 ]
             }
-        ],
+        ]),
+        "rollback_plan": gemini_playbook.get("rollback_plan", "Revert to primary system if backup fails"),
+        "escalation_contacts": gemini_playbook.get("escalation_contacts", [failed_agent.get("owner", "platform-team@company.com")]),
         "audit_trail": [
             {
                 "type": "dependency",
-                "title": f"Dependency: {agent_name} → InventoryAgent",
+                "title": f"Dependency: {failed_agent['name']} → InventoryAgent",
                 "evidence": [
                     "Trace ID: 7a8b9c4d-e5f6-4321-a1b2-c3d4e5f67890",
                     "Timestamp: 2026-02-04 14:23:11 UTC",
@@ -685,7 +743,7 @@ async def generate_playbook():
             },
             {
                 "type": "risk",
-                "title": f"Risk Assessment: {agent_name} = SPOF",
+                "title": f"Risk Assessment: {failed_agent['name']} = SPOF",
                 "evidence": [
                     "Centrality score: 0.87 (top 5%)",
                     f"Downstream agents: {sim['impacted_count']}",

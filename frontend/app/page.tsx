@@ -11,16 +11,16 @@ export default function ScanPage() {
   const { setScanData } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [scanResult, setScanResult] = useState<any>(null);
+  const [selectedDataset, setSelectedDataset] = useState<'ecommerce' | 'content'>('ecommerce');
 
-  const handleDemoScan = async () => {
+  const handleDemoScan = async (datasetType: 'ecommerce' | 'content') => {
     try {
       setLoading(true);
       setError(null);
       setScanResult(null);
       
-      const data = await scanAgents('ecommerce');
+      const data = await scanAgents(datasetType);
       setScanData(data);
       setScanResult(data);
       
@@ -63,36 +63,73 @@ export default function ScanPage() {
           </p>
         </div>
 
-        {/* Demo Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 mb-8">
-          <div className="flex items-start gap-4 mb-6">
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-6 h-6 text-blue-600" />
+        {/* Demo Dataset Cards */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          {/* E-commerce Dataset */}
+          <div className={`bg-white rounded-2xl shadow-xl border-2 p-8 transition-all cursor-pointer ${
+            selectedDataset === 'ecommerce' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200 hover:border-blue-300'
+          }`}
+          onClick={() => setSelectedDataset('ecommerce')}>
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  🛒 E-commerce Platform
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  24 AI agents: Pricing, Inventory, Payment, Shipping, Cart, Checkout, Support, and 4 shadow agents
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Demo: E-commerce Agent System
-              </h3>
-              <p className="text-gray-600">
-                Explore a realistic e-commerce platform with 24 AI agents including pricing, inventory, shipping, and support systems.
-              </p>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>24 agents • 28 dependencies • 4 shadow agents</span>
             </div>
           </div>
 
+          {/* AI Content Pipeline Dataset */}
+          <div className={`bg-white rounded-2xl shadow-xl border-2 p-8 transition-all cursor-pointer ${
+            selectedDataset === 'content' ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'
+          }`}
+          onClick={() => setSelectedDataset('content')}>
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  🎨 AI Content Pipeline
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  18 AI agents: Text/Image/Video generators, Quality checkers, SEO, Translation, Publishing, and 3 shadow agents
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span>18 agents • 19 dependencies • 3 shadow agents</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Scan Button */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 mb-8">
           <button
-            onClick={handleDemoScan}
+            onClick={() => handleDemoScan(selectedDataset)}
             disabled={loading}
             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-4 px-6 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Scanning Agents...
+                Scanning {selectedDataset === 'ecommerce' ? 'E-commerce' : 'AI Content'} Agents...
               </>
             ) : (
               <>
                 <Sparkles className="w-5 h-5" />
-                Scan Demo Dataset
+                Scan {selectedDataset === 'ecommerce' ? 'E-commerce' : 'AI Content Pipeline'} Dataset
               </>
             )}
           </button>
