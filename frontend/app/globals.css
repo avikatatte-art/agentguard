@@ -2,19 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --border: 214.3 31.8% 91.4%;
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+@layer base {
+  :root {
+    --background: 228 16% 8%;
+    --foreground: 210 20% 95%;
+    --card: 228 16% 11%;
+    --card-foreground: 210 20% 95%;
+    --popover: 228 16% 11%;
+    --popover-foreground: 210 20% 95%;
+    --primary: 231 68% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 228 14% 16%;
+    --secondary-foreground: 210 20% 90%;
+    --muted: 228 14% 16%;
+    --muted-foreground: 220 10% 55%;
+    --accent: 270 60% 58%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 228 14% 18%;
+    --input: 228 14% 18%;
+    --ring: 231 68% 56%;
+    --chart-1: 231 68% 56%;
+    --chart-2: 270 60% 58%;
+    --chart-3: 197 50% 50%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.75rem;
+    --sidebar-background: 228 16% 8%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 231 68% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 228 14% 16%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 228 14% 18%;
+    --sidebar-ring: 231 68% 56%;
+  }
 }
 
-body {
-  color: rgb(var(--foreground));
-  background: rgb(var(--background));
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@keyframes spotlight {
+  0% {
+    opacity: 0;
+    transform: translate(-72%, -62%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -40%) scale(1);
+  }
+}
+
+.animate-spotlight {
+  animation: spotlight 2s ease 0.75s 1 forwards;
+}
+
+.loader {
+  width: 28px;
+  height: 28px;
+  border: 3px solid hsl(var(--muted-foreground));
+  border-bottom-color: hsl(var(--primary));
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

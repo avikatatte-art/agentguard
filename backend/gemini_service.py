@@ -21,7 +21,7 @@ if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
 # Use Gemini 3 Flash for fast responses
-MODEL_NAME = "gemini-2.0-flash-exp"
+MODEL_NAME = "gemini-3-flash-preview"
 
 
 class GeminiService:

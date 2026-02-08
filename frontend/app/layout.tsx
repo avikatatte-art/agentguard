@@ -1,22 +1,25 @@
+import React from "react"
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Geist, Geist_Mono } from 'next/font/google'
+
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const _geist = Geist({ subsets: ['latin'] })
+const _geistMono = Geist_Mono({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'AgentGuard - Multi-Agent Reliability Platform',
-  description: 'Prevent cascade failures, generate recovery playbooks, and provide tamper-proof audit trails',
+  description: 'Discover dependencies, identify risks, and prevent cascade failures in your AI agent ecosystem.',
 }
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode
-}) {
+}>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" className="dark">
+      <body className="font-sans antialiased">{children}</body>
     </html>
   )
 }

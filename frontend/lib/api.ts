@@ -1,76 +1,66 @@
-import axios from 'axios';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-export const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+const API_BASE = "http://localhost:8000";
 
 export interface Agent {
   id: string;
   name: string;
   type: string;
-  risk: 'high' | 'medium' | 'low';
+  status?: string;
+  risk_level?: string;
+  risk?: string;
+  dependencies?: string[];
+  version?: string;
+  uptime?: string;
+  requests_per_min?: number;
+  avg_latency_ms?: number;
+  last_deployed?: string;
+  owner?: string;
 }
 
-export interface Dependency {
-  source: string;
-  target: string;
-  type: string;
-  confidence: number;
-}
-
-export interface ScanResponse {
+export interface ScanResult {
   success: boolean;
+  agents: Agent[];
   total_agents: number;
   total_shadow_agents: number;
-  agents: Agent[];
-  shadow_agents: Agent[];
-  dependencies: Dependency[];
+  shadow_agents: any[];
+  dependencies: any[];
+  scan_time: string;
+  demo_type: string;
+  metrics: {
+    total_requests_per_min: number;
+    avg_uptime: string;
+    critical_agents: number;
+    high_risk_agents: number;
+  };
+  gemini_available: boolean;
 }
 
 export interface GraphNode {
   id: string;
-  data: {
-    label: string;
-    type: string;
-    risk: string;
-  };
+  data: { label: string; risk: string; type: string };
   position: { x: number; y: number };
-  type: string;
 }
 
 export interface GraphEdge {
   id: string;
   source: string;
   target: string;
-  type: string;
-  data: {
-    type: string;
-    confidence: number;
-  };
+  label?: string;
+  animated?: boolean;
 }
 
-export interface GraphResponse {
+export interface GraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  analysis: {
-    spof_agents: string[];
+  risk_analysis: {
+    overall_risk: string;
+    single_points_of_failure: string[];
     circular_dependencies: string[][];
     risk_scores: Record<string, number>;
-    overall_risk: number;
   };
 }
 
-export interface SimulationResponse {
-  failed_agent: {
-    id: string;
-    name: string;
-    type: string;
-  };
+export interface SimulationResult {
+  failed_agent: { id: string; name: string; type: string };
   impacted_agents: Agent[];
   impacted_count: number;
   blast_radius_score: number;
@@ -80,30 +70,43 @@ export interface SimulationResponse {
     revenue_risk: string;
     estimated_recovery_time: string;
   };
+  simulation_time: string;
+}
+
+export interface PlaybookAction {
+  action: string;
+  verification: string;
+  expected_outcome: string;
 }
 
 export interface PlaybookStep {
-  id: string;
-  title: string;
-  timeframe: string;
-  actions: string[];
-  verifications: string[];
+  phase: string;
+  time_range: string;
+  actions: PlaybookAction[];
 }
 
-export interface AuditTrail {
+export interface AuditEntry {
   type: string;
   title: string;
   evidence: string[];
-  confidence: number;
 }
 
-export interface PlaybookResponse {
+export interface Playbook {
   incident: string;
   estimated_recovery_time: string;
   severity: string;
+  gemini_analysis?: {
+    root_cause: string;
+    severity: string;
+    blast_radius_explanation: string;
+    recommended_actions: string[];
+    prevention_measures: string[];
+  };
   steps: PlaybookStep[];
-  audit_trail: AuditTrail[];
-  blockchain_proof: {
+  rollback_plan: string;
+  escalation_contacts: string[];
+  audit_trail: AuditEntry[];
+  blockchain_proof?: {
     chain: string;
     tx_hash: string;
     block: number;
@@ -111,24 +114,40 @@ export interface PlaybookResponse {
     verified: boolean;
     explorer_url: string;
   };
+  generated_at: string;
 }
 
-export const scanAgents = async (demoType: string = 'ecommerce'): Promise<ScanResponse> => {
-  const response = await api.post('/api/scan', { demo_type: demoType });
-  return response.data;
-};
+export async function scanAgents(demoType: string = "ecommerce"): Promise<ScanResult> {
+  const res = await fetch(`${API_BASE}/api/scan`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ demo_type: demoType }),
+  });
+  if (!res.ok) throw new Error(`Scan failed: ${res.statusText}`);
+  return res.json();
+}
 
-export const getGraph = async (): Promise<GraphResponse> => {
-  const response = await api.get('/api/graph');
-  return response.data;
-};
+export async function getGraph(): Promise<GraphData> {
+  const res = await fetch(`${API_BASE}/api/graph`);
+  if (!res.ok) throw new Error(`Graph failed: ${res.statusText}`);
+  return res.json();
+}
 
-export const simulateFailure = async (agentId: string): Promise<SimulationResponse> => {
-  const response = await api.post('/api/simulate', { agent_id: agentId });
-  return response.data;
-};
+export async function simulateFailure(agentId: string): Promise<SimulationResult> {
+  const res = await fetch(`${API_BASE}/api/simulate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ agent_id: agentId }),
+  });
+  if (!res.ok) throw new Error(`Simulate failed: ${res.statusText}`);
+  return res.json();
+}
 
-export const generatePlaybook = async (): Promise<PlaybookResponse> => {
-  const response = await api.post('/api/playbook');
-  return response.data;
-};
+export async function getPlaybook(): Promise<Playbook> {
+  const res = await fetch(`${API_BASE}/api/playbook`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error(`Playbook failed: ${res.statusText}`);
+  return res.json();
+}
