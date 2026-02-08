@@ -26,22 +26,30 @@ export function TestTab() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (simulationResult && !playbook) {
+    if (simulationResult && !playbook && !loading) {
       fetchPlaybook()
     }
-  }, [simulationResult])
+  }, [simulationResult, playbook])
 
   async function fetchPlaybook() {
     setLoading(true)
     setError(null)
     try {
+      console.log("[TestTab] Fetching playbook from backend...")
       const result = await getPlaybook()
+      console.log("[TestTab] Playbook received:", result)
       setPlaybook(result)
     } catch (e: any) {
+      console.error("[TestTab] Playbook fetch error:", e)
       setError(e.message || "Failed to generate playbook")
     } finally {
       setLoading(false)
     }
+  }
+
+  function handleRegenerate() {
+    setPlaybook(null)
+    fetchPlaybook()
   }
 
   if (!simulationResult) {
@@ -103,6 +111,9 @@ export function TestTab() {
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
+          <Button size="sm" variant="outline" onClick={handleRegenerate} className="text-xs">
+            <RotateCcw className="mr-1 h-3 w-3" /> Regenerate
+          </Button>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 px-3 py-1 text-xs font-medium text-blue-300 ring-1 ring-blue-500/30">
             <Sparkles className="h-3 w-3" />
             Gemini 3 AI
@@ -157,6 +168,18 @@ export function TestTab() {
                 <p className="mb-1 text-xs font-medium text-purple-300/80">Blast Radius</p>
                 <p>{playbook.gemini_analysis.blast_radius_explanation}</p>
               </div>
+              {(playbook.gemini_analysis as any).business_impact && (
+                <div>
+                  <p className="mb-1 text-xs font-medium text-purple-300/80">Business Impact</p>
+                  <p>{(playbook.gemini_analysis as any).business_impact}</p>
+                </div>
+              )}
+              {(playbook.gemini_analysis as any).recovery_time_estimate && (
+                <div>
+                  <p className="mb-1 text-xs font-medium text-purple-300/80">Recovery Time Estimate</p>
+                  <p>{(playbook.gemini_analysis as any).recovery_time_estimate}</p>
+                </div>
+              )}
               {playbook.gemini_analysis.recommended_actions?.length > 0 && (
                 <div>
                   <p className="mb-1 text-xs font-medium text-purple-300/80">Recommended Actions</p>
