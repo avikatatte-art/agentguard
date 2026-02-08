@@ -27,7 +27,7 @@ function FlipTitle() {
       <h1
         key={key}
         className="flex flex-wrap text-4xl font-black uppercase leading-none tracking-tight md:text-5xl lg:text-[4rem]"
-        style={{ transformStyle: "preserve3d" }}
+        style={{ transformStyle: "preserve-3d" }}
         aria-label={TITLE}
       >
         {titleWords.map((word, wi) => {
